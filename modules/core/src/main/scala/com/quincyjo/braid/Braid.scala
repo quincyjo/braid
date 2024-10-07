@@ -32,7 +32,8 @@ trait Braid[Json] {
     */
   def fromString(string: String): Json
 
-  /** Creates a JSON number with the value of the given [[BigDecimal]].
+  /** Creates a JSON number with the value of the given
+    * [[scala.math.BigDecimal]].
     * @param bigDecimal
     *   The value of the JSON.
     * @return
@@ -40,7 +41,7 @@ trait Braid[Json] {
     */
   def fromBigDecimal(bigDecimal: BigDecimal): Json
 
-  /** Creates a JSON number with the value of the given [[Int]].
+  /** Creates a JSON number with the value of the given [[scala.Int]].
     * @param int
     *   The value of the JSON.
     * @return
@@ -48,7 +49,7 @@ trait Braid[Json] {
     */
   def fromInt(int: Int): Json
 
-  /** Creates a JSON number with the value of the given [[BigInt]].
+  /** Creates a JSON number with the value of the given [[scala.BigInt]].
     * @param bigInt
     *   The value of the JSON.
     * @return
@@ -56,7 +57,7 @@ trait Braid[Json] {
     */
   def fromBigInt(bigInt: BigInt): Json
 
-  /** Creates a JSON number with the value of the given [[Long]].
+  /** Creates a JSON number with the value of the given [[scala.Long]].
     * @param long
     *   The number value of the JSON.
     * @return
@@ -64,8 +65,9 @@ trait Braid[Json] {
     */
   def fromLong(long: Long): Json
 
-  /** Creates a JSON number with the value of the given [[Float]]. If the
-    * [[Float]] value can not be represented as JSON, then [[None]] is returned.
+  /** Creates a JSON number with the value of the given [[scala.Float]]. If the
+    * [[scala.Float]] value can not be represented as JSON, then [[scala.None]]
+    * is returned.
     * @param float
     *   The number value of the JSON.
     * @return
@@ -73,9 +75,9 @@ trait Braid[Json] {
     */
   def fromFloat(float: Float): Option[Json]
 
-  /** Creates a JSON number with the value of the given [[Double]]. If the
-    * [[Double]] value can not be represented as JSON, then [[None]] is
-    * returned.
+  /** Creates a JSON number with the value of the given [[scala.Double]]. If the
+    * [[scala.Double]] value can not be represented as JSON, then [[scala.None]]
+    * is returned.
     * @param double
     *   The number value of the JSON.
     * @return
@@ -178,21 +180,21 @@ trait Braid[Json] {
     */
   def isNull(json: Json): Boolean
 
-  /** Returns a [[Map]] representation of the JSON if it is an object or None
-    * otherwise.
+  /** Returns a [[scala.collection.Map]] representation of the JSON if it is an
+    * object or None otherwise.
     * @param json
     *   The JSON to evaluate.
     * @return
-    *   A [[Map]] of key value pairs or None.
+    *   A [[scala.collection.Map]] of key value pairs or None.
     */
   def asObject(json: Json): Option[Map[String, Json]]
 
-  /** Returns a [[Vector]] representation of the JSON if it is an array or None
-    * otherwise.
+  /** Returns a [[scala.collection.immutable.Vector]] representation of the JSON
+    * if it is an array or None otherwise.
     * @param json
     *   The JSON to evaluate.
     * @return
-    *   A [[Vector]] of JSON values or None.
+    *   A [[scala.collection.immutable.Vector]] of JSON values or None.
     */
   def asArray(json: Json): Option[Vector[Json]]
 
@@ -220,11 +222,11 @@ trait Braid[Json] {
     */
   def asNumber(json: Json): Option[BigDecimal]
 
-  /** Returns [[Unit]] if the JSON is null or None otherwise.
+  /** Returns [[scala.Unit]] if the JSON is null or None otherwise.
     * @param json
     *   The JSON to evaluate.
     * @return
-    *   A [[Unit]] or None.
+    *   A [[scala.Unit]] or None.
     */
   def asNull(json: Json): Option[Unit]
 
