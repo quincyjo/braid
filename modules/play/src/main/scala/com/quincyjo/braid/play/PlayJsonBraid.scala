@@ -37,7 +37,7 @@ object PlayJsonBraid extends Braid[JsValue] {
     JsNumber(BigDecimal(long))
 
   override def fromFloat(float: Float): Option[JsValue] =
-    Option.unless(float.isNaN)(JsNumber(BigDecimal(float)))
+    Option.unless(float.isNaN)(JsNumber(BigDecimal(float.toDouble)))
 
   override def fromDouble(double: Double): Option[JsValue] =
     Option.unless(double.isNaN)(JsNumber(BigDecimal(double)))
