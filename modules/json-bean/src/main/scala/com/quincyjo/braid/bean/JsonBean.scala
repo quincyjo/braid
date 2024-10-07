@@ -141,7 +141,7 @@ object JsonBean {
       JNumber(BigDecimal(long))
 
     override def fromFloat(float: Float): Option[JsonBean] =
-      Option.unless(float.isNaN)(JNumber(BigDecimal(float)))
+      Option.unless(float.isNaN)(JNumber(BigDecimal(float.doubleValue())))
 
     override def fromDouble(double: Double): Option[JsonBean] =
       Option.unless(double.isNaN)(JNumber(BigDecimal(double)))
