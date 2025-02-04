@@ -19,7 +19,7 @@ val json4sAST = "org.json4s" %% "json4s-ast" % json4sVersion
 
 // skip / publish := true
 ThisBuild / tlBaseVersion := "0.1"
-ThisBuild / version := "0.1.0"
+ThisBuild / version := "0.1.1"
 // Default to same as circe or SBT isn't happy.
 // https://github.com/sbt/sbt/issues/3465
 ThisBuild / scalaVersion := Scala2_13
