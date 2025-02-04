@@ -14,7 +14,7 @@ Supported JSON Libraries:
 
 | Library                                                 |     Scala 2.13     |     Scala 3.X      |
 |---------------------------------------------------------|:------------------:|:------------------:|
-| [Circe JSON](https://github.com/circe/circe)            | :white_check_mark: |        :x:         |
+| [Circe JSON](https://github.com/circe/circe)            | :white_check_mark: | :white_check_mark: |
 | [Play JSON](https://github.com/playframework/play-json) | :white_check_mark: | :white_check_mark: |
 | [Json4s](https://github.com/json4s/json4s)              | :white_check_mark: | :white_check_mark: |
 
@@ -47,22 +47,23 @@ Example usage of creating, accessing, and mutating JSON generically. All functio
 underlying JSON type is a Play `JsValue`.
 
 ```scala
-scala> val json = implicitly[Braid[JsValue]].fromString("foobar")
+scala >
+val json = implicitly[Braid[JsValue]].fromString("foobar")
 val json: play.api.libs.json.JsValue = "foobar"
 
-scala> json.isString
+scala > json.isString
 val res0: Boolean = true
 
-scala> json.isNumber
+scala > json.isNumber
 val res1: Boolean = false
 
-scala> json.asString
+scala > json.asString
 val res2: Option[String] = Some(foobar)
 
-scala> json.mapString(string => s"$string mutated")
+scala > json.mapString(string => s"$string mutated")
 val res3: play.api.libs.json.JsValue = "foobar mutated"
 
-scala> json.mapNumber(_ + 3)
+scala > json.mapNumber(_ + 3)
 val res4: play.api.libs.json.JsValue = "foobar"
 ```
 
@@ -102,5 +103,5 @@ JSON path.
 The JSON operations module may be added to a project with the following dependency:
 
 ```scala
-libraryDependencies += "com.quincyjo" %% "braid-json-operations" % -version-
+libraryDependencies += "com.quincyjo" %% "braid-json-operations" % -version -
 ```

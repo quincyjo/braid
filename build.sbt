@@ -44,7 +44,7 @@ ThisBuild / developers := List(
   )
 )
 ThisBuild / licenses := Seq(License.Apache2)
-ThisBuild / tlJdkRelease := Some(11)
+ThisBuild / tlJdkRelease := Some(17)
 
 Global / excludeLintKeys += tlBaseVersion
 
@@ -88,21 +88,10 @@ lazy val circe = project
   .in(file("modules/circe"))
   .dependsOn(core, testBehaviours % Test)
   .settings(
-    crossScalaVersions := List(Scala2_13),
     name := "Braid Circe",
     moduleName := "braid-circe",
-    skip := tlIsScala3.value,
-    update / skip := false,
-    libraryDependencies ++= (
-      if (tlIsScala3.value) Nil
-      else
-        Seq(
-          scalameta,
-          scalaTest,
-          scalaTestFlatSpec,
-          circeCore
-        )
-    )
+    libraryDependencies += circeCore,
+    tlVersionIntroduced := Map("3" -> "0.1.1")
   )
 
 lazy val play = project
