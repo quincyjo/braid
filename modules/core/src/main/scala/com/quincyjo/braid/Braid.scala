@@ -362,11 +362,11 @@ trait Braid[Json] {
 
 object Braid {
 
-  /** Summon the [[Braid]] instance for the given JSON type.
+  /** Summon a [[Braid]] instance for the given JSON type.
     * @param braid
-    *   The implicit [[Braid]] in scope.
+    *   An implicit [[Braid]] in scope.
     * @tparam Json
-    *   The JSON type.
+    *   The JSON type to summon a [[Braid]] for.
     * @return
     *   The [[Braid]] instance.
     */
@@ -386,46 +386,214 @@ object Braid {
     * @param json
     *   The JSON value to wrap.
     * @param braid
-    *   The [[Braid]] for the type of {@code json}.
+    *   The [[Braid]] for the type of <pre>json</pre> .
     * @tparam Json
-    *   The type of {@code json}.
+    *   The type of <pre>json</pre> .
     */
   class BraidedJsonOps[Json](json: Json)(implicit
       braid: Braid[Json]
   ) {
 
+    /** Checks if the JSON is an object.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isObject]]
+      * @return
+      *   True if the JSON is an object, false otherwise.
+      */
     def isObject: Boolean = braid.isObject(json)
+
+    /** Checks if the JSON is an array.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isArray]]
+      * @return
+      *   True if the JSON is an array, false otherwise.
+      */
     def isArray: Boolean = braid.isArray(json)
+
+    /** Checks if the JSON is a fromString.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isString]]
+      * @return
+      *   True if the JSON is a fromString, false otherwise.
+      */
     def isString: Boolean = braid.isString(json)
+
+    /** Checks if the JSON is a boolean.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isBoolean]]
+      * @return
+      *   True if the JSON is a boolean, false otherwise.
+      */
     def isBoolean: Boolean = braid.isBoolean(json)
+
+    /** Checks if the JSON is a number.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isNumber]]
+      * @return
+      *   True if the JSON is a number, false otherwise.
+      */
     def isNumber: Boolean = braid.isNumber(json)
+
+    /** Checks if the JSON is null.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isNull]]
+      * @return
+      *   True if the JSON is null, false otherwise.
+      */
     def isNull: Boolean = braid.isNull(json)
 
+    /** If this JSON is an object, returns a [[scala.collection.Map]]
+      * representation of the JSON object.
+      * @see
+      *   [[com.quincyjo.braid.Braid.asObject]]
+      * @return
+      *   A map of key value pairs or None if the JSON is not an object.
+      */
     def asObject: Option[Map[String, Json]] = braid.asObject(json)
+
+    /** If this JSON is an array, returns a
+      * [[scala.collection.immutable.Vector]] representation of the JSON array.
+      * @see
+      *   [[com.quincyjo.braid.Braid.asArray]]
+      * @return
+      *   A vector of JSON values or None if the JSON is not an array.
+      */
     def asArray: Option[Vector[Json]] = braid.asArray(json)
+
+    /** If this JSON is a fromString, returns a [[java.lang.String]]
+      * representation of the JSON fromString.
+      * @see
+      *   [[com.quincyjo.braid.Braid.asString]]
+      * @return
+      *   A string or None if the JSON is not a fromString.
+      */
     def asString: Option[String] = braid.asString(json)
+
+    /** If this JSON is a boolean, returns a [[scala.Boolean]] representation of
+      * the JSON boolean.
+      * @see
+      *   [[com.quincyjo.braid.Braid.asBoolean]]
+      * @return
+      *   A boolean or None if the JSON is not a boolean.
+      */
     def asBoolean: Option[Boolean] = braid.asBoolean(json)
+
+    /** If this JSON is a number, returns a [[scala.BigDecimal]] representation
+      * of the JSON number.
+      * @see
+      *   [[com.quincyjo.braid.Braid.asNumber]]
+      * @return
+      *   A number or None if the JSON is not a number.
+      */
     def asNumber: Option[BigDecimal] = braid.asNumber(json)
+
+    /** If this JSON is null, returns a [[scala.Unit]] representation of the
+      * JSON null.
+      * @see
+      *   [[com.quincyjo.braid.Braid.asNull]]
+      * @return
+      *   A unit or None if the JSON is not null.
+      */
     def asNull: Option[Unit] = braid.asNull(json)
 
+    /** Maps the provided function over the JSON if it is an object or returns
+      * it unmodified if it is not.
+      * @see
+      *   [[com.quincyjo.braid.Braid.mapObject]]
+      * @param f
+      *   The function to apply to the JSON if it is an object.
+      * @return
+      *   The transformed JSON object or original JSON if not an object.
+      */
     def mapObject(f: Map[String, Json] => Map[String, Json]): Json =
       braid.mapObject(json)(f)
 
+    /** Maps the provided function over the JSON if it is an array or returns it
+      * unmodified if it is not.
+      * @see
+      *   [[com.quincyjo.braid.Braid.mapArray]]
+      * @param f
+      *   The function to apply to the JSON if it is an array.
+      * @return
+      *   The transformed JSON array or original JSON if not an array.
+      */
     def mapArray(f: Vector[Json] => Vector[Json]): Json =
       braid.mapArray(json)(f)
 
+    /** Maps the provided function over the JSON if it is a fromString or
+      * returns it unmodified if it is not.
+      * @see
+      *   [[com.quincyjo.braid.Braid.mapString]]
+      * @param f
+      *   The function to apply to the JSON if it is a fromString.
+      * @return
+      *   The transformed JSON string or original JSON if not a fromString.
+      */
     def mapString(f: String => String): Json =
       braid.mapString(json)(f)
 
+    /** Maps the provided function over the JSON if it is a boolean or returns
+      * it unmodified if it is not.
+      * @see
+      *   [[com.quincyjo.braid.Braid.mapBoolean]]
+      * @param f
+      *   The function to apply to the JSON if it is a boolean.
+      * @return
+      *   The transformed JSON boolean or original JSON if not a boolean.
+      */
     def mapBoolean(f: Boolean => Boolean): Json =
       braid.mapBoolean(json)(f)
 
+    /** Maps the provided function over the JSON if it is a number or returns it
+      * unmodified if it is not.
+      * @see
+      *   [[com.quincyjo.braid.Braid.mapNumber]]
+      * @param f
+      *   The function to apply to the JSON if it is a number.
+      * @return
+      *   The transformed JSON number or original JSON if not a number.
+      */
     def mapNumber(f: BigDecimal => BigDecimal): Json =
       braid.mapNumber(json)(f)
 
+    /** Returns true if the JSON is an atomic value. IE, a string, number,
+      * boolean, or null.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isAtomic]]
+      * @return
+      *   True if the JSON is an atomic value, false otherwise.
+      */
     def isAtomic: Boolean = braid.isAtomic(json)
+
+    /** Returns true if the JSON is an associative, IE, an object or array, and
+      * false if it is not.
+      * @see
+      *   [[com.quincyjo.braid.Braid.isAssociative]]
+      * @return
+      *   True if the JSON is an associative, false otherwise.
+      */
     def isAssociative: Boolean = braid.isAssociative(json)
 
+    /** Folds the JSON with the provided functions into a reduced value.
+      * @see
+      *   [[com.quincyjo.braid.Braid.fold]]
+      * @param ifNull
+      *   Value to return if the JSON is null.
+      * @param jsonBoolean
+      *   Function to apply if the JSON is a boolean.
+      * @param jsonNumber
+      *   Function to apply if the JSON is a number.
+      * @param jsonString
+      *   Function to apply if the JSON is a string.
+      * @param jsonArray
+      *   Function to apply if the JSON is an array.
+      * @param jsonObject
+      *   Function to apply if the JSON is an object.
+      * @tparam B
+      *   The reduced type.
+      * @return
+      *   The reduced value.
+      */
     def fold[B](
         ifNull: => B,
         jsonBoolean: Boolean => B,
@@ -442,6 +610,21 @@ object Braid {
       jsonObject
     )
 
+    /** Reduces this JSON if it is an object or an array, or returns
+      * <pre>orElse</pre> otherwise.
+      * @see
+      *   [[com.quincyjo.braid.Braid.arrayOrObject]]
+      * @param orElse
+      *   The value to return if the JSON is not an object or an array.
+      * @param jsonArray
+      *   If the JSON is an array, it is transformed by this function.
+      * @param jsonObject
+      *   If the JSON is an object, it is transformed by this function.
+      * @tparam B
+      *   The reduced type.
+      * @return
+      *   The reduced value.
+      */
     def arrayOrObject[B](
         orElse: => B,
         jsonArray: Vector[Json] => B,
