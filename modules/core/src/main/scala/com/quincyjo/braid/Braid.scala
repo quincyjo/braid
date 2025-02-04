@@ -331,8 +331,8 @@ trait Braid[Json] {
     */
   final def isAssociative(json: Json): Boolean = isObject(json) || isArray(json)
 
-  /** Reduces this JSON if it is an object or an array, or returns {@code
-    * orElse} otherwise.
+  /** Reduces this JSON if it is an object or an array, or returns
+    * <pre>orElse</pre> otherwise.
     * @param json
     *   The JSON to reduce.
     * @param orElse
@@ -361,6 +361,16 @@ trait Braid[Json] {
 }
 
 object Braid {
+
+  /** Summon the [[Braid]] instance for the given JSON type.
+    * @param braid
+    *   The implicit [[Braid]] in scope.
+    * @tparam Json
+    *   The JSON type.
+    * @return
+    *   The [[Braid]] instance.
+    */
+  def apply[Json](implicit braid: Braid[Json]): Braid[Json] = braid
 
   trait ToBraidedJsonOps {
 
