@@ -88,6 +88,7 @@ lazy val circe = project
   .in(file("modules/circe"))
   .dependsOn(core, testBehaviours % Test)
   .settings(
+    crossScalaVersions := List(Scala2_13),
     name := "Braid Circe",
     moduleName := "braid-circe",
     skip := tlIsScala3.value,
