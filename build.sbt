@@ -1,21 +1,14 @@
-val Scala3 = "3.3.1"
-val Scala2_13 = "2.13.12"
+import scala.scalanative.build._
+import sbtcrossproject.CrossPlugin.autoImport._
 
-val scalatestVersion = "3.2.17"
-val scalaTest = "org.scalatest" %% "scalatest" % scalatestVersion
-val scalaTestFlatSpec =
-  "org.scalatest" %% "scalatest-flatspec" % scalatestVersion
+val Scala3 = "3.3.6"
+val Scala2_13 = "2.13.17"
 
-val scalameta = "org.scalameta" %% "munit" % "0.7.29"
-
-val circeVersion = "0.14.6"
-val circeCore = "io.circe" %% "circe-core" % circeVersion
-
-val playJsonVersion = "3.0.1"
-val playJson = "org.playframework" %% "play-json" % playJsonVersion
-
-val json4sVersion = "4.0.7"
-val json4sAST = "org.json4s" %% "json4s-ast" % json4sVersion
+val scalatestVersion = "3.2.19"
+val scalametaVersion = "1.0.4"
+val circeVersion = "0.14.14"
+val playJsonVersion = "3.1.0-M9"
+val json4sVersion = "4.1.0-M8"
 
 // skip / publish := true
 ThisBuild / tlBaseVersion := "0.1"
@@ -46,13 +39,21 @@ ThisBuild / developers := List(
 ThisBuild / licenses := Seq(License.Apache2)
 ThisBuild / tlJdkRelease := Some(17)
 
+ThisBuild / dependencyOverrides += "org.typelevel" %% "kind-projector" % "0.13.4"
+ThisBuild / evictionErrorLevel := Level.Warn
+
+
 Global / excludeLintKeys += tlBaseVersion
+
+// Increase heap size for Scala Native linking
+fork := true
+javaOptions += "-Xmx4G"
 
 val commonSettings = Seq(
   libraryDependencies ++= Seq(
-    scalameta % Test,
-    scalaTest % Test,
-    scalaTestFlatSpec % Test
+    "org.scalameta" %%% "munit" % scalametaVersion % Test,
+    "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
+    "org.scalatest" %%% "scalatest-flatspec" % scalatestVersion % Test
   ),
   scalacOptions ++= (
     if (!tlIsScala3.value)
@@ -64,18 +65,29 @@ val commonSettings = Seq(
   )
 )
 
+val nativeSettings = Seq(
+  nativeConfig ~= {
+    _.withLTO(LTO.full)
+      .withMode(Mode.releaseFast)
+      .withGC(GC.commix)
+  }
+)
+
 lazy val root = tlCrossRootProject
   .aggregate(core, operations, circe, play, json4s)
 
-lazy val core = project
+lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/core"))
   .settings(
     name := "Braid",
     moduleName := "braid",
     commonSettings
   )
+  .nativeSettings(nativeSettings)
 
-lazy val operations = project
+lazy val operations = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/operations"))
   .dependsOn(core, jsonBean % Test)
   .settings(
@@ -83,38 +95,46 @@ lazy val operations = project
     moduleName := "braid-json-operations",
     commonSettings
   )
+  .nativeSettings(nativeSettings)
 
-lazy val circe = project
+lazy val circe = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/circe"))
   .dependsOn(core, testBehaviours % Test)
   .settings(
     name := "Braid Circe",
     moduleName := "braid-circe",
-    libraryDependencies += circeCore,
+    libraryDependencies += "io.circe" %%% "circe-core" % circeVersion,
     tlVersionIntroduced := Map("3" -> "0.1.1")
   )
+  .nativeSettings(nativeSettings)
 
-lazy val play = project
+lazy val play = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/play"))
   .dependsOn(core, testBehaviours % Test)
   .settings(
     name := "Braid Play",
     moduleName := "braid-play",
     commonSettings,
-    libraryDependencies += playJson
+    libraryDependencies += "org.playframework" %%% "play-json" % playJsonVersion
   )
+  .nativeSettings(nativeSettings)
 
-lazy val json4s = project
+lazy val json4s = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/json4s"))
   .dependsOn(core, testBehaviours % Test)
   .settings(
     name := "Braid Json4s",
     moduleName := "braid-json4s",
     commonSettings,
-    libraryDependencies += json4sAST
+    libraryDependencies += "org.json4s" %%% "json4s-ast" % json4sVersion
   )
+  .nativeSettings(nativeSettings)
 
-lazy val testBehaviours = project
+lazy val testBehaviours = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/test-behaviours"))
   .dependsOn(core)
   .settings(
@@ -123,13 +143,15 @@ lazy val testBehaviours = project
     update / skip := false,
     compile / skip := false,
     libraryDependencies ++= Seq(
-      scalameta,
-      scalaTest,
-      scalaTestFlatSpec
+      "org.scalameta" %%% "munit" % scalametaVersion,
+      "org.scalatest" %%% "scalatest" % scalatestVersion,
+      "org.scalatest" %%% "scalatest-flatspec" % scalatestVersion
     )
   )
+  .nativeSettings(nativeSettings)
 
-lazy val jsonBean = project
+lazy val jsonBean = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .crossType(CrossType.Pure)
   .in(file("modules/json-bean"))
   .dependsOn(core)
   .settings(
@@ -138,3 +160,4 @@ lazy val jsonBean = project
     update / skip := false,
     compile / skip := false
   )
+  .nativeSettings(nativeSettings)
