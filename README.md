@@ -47,8 +47,7 @@ Example usage of creating, accessing, and mutating JSON generically. All functio
 underlying JSON type is a Play `JsValue`.
 
 ```scala
-scala >
-val json = implicitly[Braid[JsValue]].fromString("foobar")
+scala > val json = Braid[JsValue].fromString("foobar")
 val json: play.api.libs.json.JsValue = "foobar"
 
 scala > json.isString
@@ -67,13 +66,37 @@ scala > json.mapNumber(_ + 3)
 val res4: play.api.libs.json.JsValue = "foobar"
 ```
 
+Write functions generically for any JSON type.
+
+```scala
+def getValues[Json: Braid](json: Json): Iterable[Json] =
+    Braid[Json].arrayOrObject(json)(
+        Iterable.single,
+        identity,
+        _.values   
+    )
+```
+
+Or with implicit syntax in scope:
+
+```scala
+import com.quincyjo.braid.implicits._
+
+def getValues[Json: Braid](json: Json): Iterable[Json] =
+    json.arrayOrObject(
+        Iterable.single,
+        identity,
+        _.values   
+    )
+```
+
 ## Additional Modules
 
 ### Circe Support
 
 Provided Braid for [Circe JSON](https://github.com/circe/circe).
 
-```
+```sbt
 libraryDependencies += "com.quincyjo" %% "braid-circe" % -version-
 ```
 
@@ -81,7 +104,7 @@ libraryDependencies += "com.quincyjo" %% "braid-circe" % -version-
 
 Provided Braid for [Play JSON](https://github.com/playframework/play-json).
 
-```
+```sbt
 libraryDependencies += "com.quincyjo" %% "braid-play" % -version-
 ```
 
@@ -89,7 +112,7 @@ libraryDependencies += "com.quincyjo" %% "braid-play" % -version-
 
 Provided Braid for [Json4s](https://github.com/json4s/json4s).
 
-```
+```sbt
 libraryDependencies += "com.quincyjo" %% "braid-json4s" % -version-
 ```
 
@@ -103,5 +126,5 @@ JSON path.
 The JSON operations module may be added to a project with the following dependency:
 
 ```scala
-libraryDependencies += "com.quincyjo" %% "braid-json-operations" % -version -
+libraryDependencies += "com.quincyjo" %% "braid-json-operations" % -version-
 ```

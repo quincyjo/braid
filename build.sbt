@@ -1,27 +1,25 @@
-val Scala3 = "3.3.1"
-val Scala2_13 = "2.13.12"
+val Scala3 = "3.3.7"
+val Scala2_13 = "2.13.18"
 
-val scalatestVersion = "3.2.17"
+val scalatestVersion = "3.2.19"
 val scalaTest = "org.scalatest" %% "scalatest" % scalatestVersion
 val scalaTestFlatSpec =
   "org.scalatest" %% "scalatest-flatspec" % scalatestVersion
 
-val scalameta = "org.scalameta" %% "munit" % "0.7.29"
+val scalametaVersion = "1.2.2"
+val scalameta = "org.scalameta" %% "munit" % scalametaVersion
 
-val circeVersion = "0.14.6"
+val circeVersion = "0.14.15"
 val circeCore = "io.circe" %% "circe-core" % circeVersion
 
-val playJsonVersion = "3.0.1"
+val playJsonVersion = "3.0.6"
 val playJson = "org.playframework" %% "play-json" % playJsonVersion
 
 val json4sVersion = "4.0.7"
 val json4sAST = "org.json4s" %% "json4s-ast" % json4sVersion
 
-// skip / publish := true
-ThisBuild / tlBaseVersion := "0.1"
-ThisBuild / version := "0.1.1"
-// Default to same as circe or SBT isn't happy.
-// https://github.com/sbt/sbt/issues/3465
+ThisBuild / tlBaseVersion := "0.2"
+ThisBuild / version := "0.2.0"
 ThisBuild / scalaVersion := Scala2_13
 ThisBuild / crossScalaVersions := List(Scala2_13, Scala3)
 ThisBuild / organization := "com.quincyjo"
@@ -137,4 +135,12 @@ lazy val jsonBean = project
     publish / skip := true,
     update / skip := false,
     compile / skip := false
+  )
+
+lazy val unidocs = project
+  .in(file("modules/unidocs"))
+  .enablePlugins(TypelevelUnidocPlugin)
+  .settings(
+    name := "braid-docs",
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(core)
   )
