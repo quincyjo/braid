@@ -18,8 +18,11 @@ package com.quincyjo.braid.play
 
 import com.quincyjo.braid.BraidSpecLike
 import play.api.libs.json._
+import com.quincyjo.braid.JsonNumberSpecLike
 
-class PlayJsonBraidSpec extends BraidSpecLike {
+class PlayJsonBraidSpec extends BraidSpecLike with JsonNumberSpecLike {
 
-  it should behave like braidFor[JsValue](PlayJsonBraid)
+  "PlayJsonBraid" should behave like braidFor[JsValue](PlayJsonBraid)
+
+  "PlayJsonJsonNumber" should behave like jsonNumberFor[JsValue](PlayJsonBraid)
 }

@@ -16,6 +16,8 @@
 
 package com.quincyjo.braid
 
+import com.quincyjo.braid.numbers.JsonNumber
+
 /** The Braid API for JSON values. Provides an API for creating, modifying, and
   * accessing JSON values. Code implemented against this API will be able to
   * operate on any JSON which provides evidence of its Braid.
@@ -66,8 +68,8 @@ trait Braid[Json] {
   def fromLong(long: Long): Json
 
   /** Creates a JSON number with the value of the given [[scala.Float]]. If the
-    * [[scala.Float]] value can not be represented as JSON, then [[scala.None]]
-    * is returned.
+    * [[scala.Float]] value can not be represented as JSON, then nothing is
+    * returned.
     * @param float
     *   The number value of the JSON.
     * @return
@@ -76,8 +78,8 @@ trait Braid[Json] {
   def fromFloat(float: Float): Option[Json]
 
   /** Creates a JSON number with the value of the given [[scala.Double]]. If the
-    * [[scala.Double]] value can not be represented as JSON, then [[scala.None]]
-    * is returned.
+    * [[scala.Double]] value can not be represented as JSON, then nothing is
+    * returned.
     * @param double
     *   The number value of the JSON.
     * @return
@@ -220,7 +222,7 @@ trait Braid[Json] {
     * @return
     *   A number or None.
     */
-  def asNumber(json: Json): Option[BigDecimal]
+  def asNumber(json: Json): Option[JsonNumber[Json]]
 
   /** Returns [[scala.Unit]] if the JSON is null or None otherwise.
     * @param json
@@ -283,7 +285,10 @@ trait Braid[Json] {
     * @return
     *   The transformed number or original JSON if not a number.
     */
-  def mapNumber(json: Json)(f: BigDecimal => BigDecimal): Json
+  final def mapNumber[T](json: Json)(
+      f: JsonNumber[Json] => T
+  )(implicit ev: JsonNumber.JsonNumberMagnet[T]): Json =
+    asNumber(json).map(f).fold(json)(ev(_)(this))
 
   /** Reduces this JSON with the given functions.
     * @param json
@@ -308,7 +313,7 @@ trait Braid[Json] {
   def fold[B](json: Json)(
       ifNull: => B,
       jsonBoolean: Boolean => B,
-      jsonNumber: BigDecimal => B,
+      jsonNumber: JsonNumber[Json] => B,
       jsonString: String => B,
       jsonArray: Vector[Json] => B,
       jsonObject: Map[String, Json] => B
@@ -400,7 +405,7 @@ object Braid {
       * @return
       *   True if the JSON is an object, false otherwise.
       */
-    def isObject: Boolean = braid.isObject(json)
+    @inline def isObject: Boolean = braid.isObject(json)
 
     /** Checks if the JSON is an array.
       * @see
@@ -408,7 +413,7 @@ object Braid {
       * @return
       *   True if the JSON is an array, false otherwise.
       */
-    def isArray: Boolean = braid.isArray(json)
+    @inline def isArray: Boolean = braid.isArray(json)
 
     /** Checks if the JSON is a fromString.
       * @see
@@ -416,7 +421,7 @@ object Braid {
       * @return
       *   True if the JSON is a fromString, false otherwise.
       */
-    def isString: Boolean = braid.isString(json)
+    @inline def isString: Boolean = braid.isString(json)
 
     /** Checks if the JSON is a boolean.
       * @see
@@ -424,7 +429,7 @@ object Braid {
       * @return
       *   True if the JSON is a boolean, false otherwise.
       */
-    def isBoolean: Boolean = braid.isBoolean(json)
+    @inline def isBoolean: Boolean = braid.isBoolean(json)
 
     /** Checks if the JSON is a number.
       * @see
@@ -432,7 +437,7 @@ object Braid {
       * @return
       *   True if the JSON is a number, false otherwise.
       */
-    def isNumber: Boolean = braid.isNumber(json)
+    @inline def isNumber: Boolean = braid.isNumber(json)
 
     /** Checks if the JSON is null.
       * @see
@@ -440,7 +445,7 @@ object Braid {
       * @return
       *   True if the JSON is null, false otherwise.
       */
-    def isNull: Boolean = braid.isNull(json)
+    @inline def isNull: Boolean = braid.isNull(json)
 
     /** If this JSON is an object, returns a [[scala.collection.Map]]
       * representation of the JSON object.
@@ -449,7 +454,7 @@ object Braid {
       * @return
       *   A map of key value pairs or None if the JSON is not an object.
       */
-    def asObject: Option[Map[String, Json]] = braid.asObject(json)
+    @inline def asObject: Option[Map[String, Json]] = braid.asObject(json)
 
     /** If this JSON is an array, returns a
       * [[scala.collection.immutable.Vector]] representation of the JSON array.
@@ -458,7 +463,7 @@ object Braid {
       * @return
       *   A vector of JSON values or None if the JSON is not an array.
       */
-    def asArray: Option[Vector[Json]] = braid.asArray(json)
+    @inline def asArray: Option[Vector[Json]] = braid.asArray(json)
 
     /** If this JSON is a fromString, returns a [[java.lang.String]]
       * representation of the JSON fromString.
@@ -467,7 +472,7 @@ object Braid {
       * @return
       *   A string or None if the JSON is not a fromString.
       */
-    def asString: Option[String] = braid.asString(json)
+    @inline def asString: Option[String] = braid.asString(json)
 
     /** If this JSON is a boolean, returns a [[scala.Boolean]] representation of
       * the JSON boolean.
@@ -476,16 +481,17 @@ object Braid {
       * @return
       *   A boolean or None if the JSON is not a boolean.
       */
-    def asBoolean: Option[Boolean] = braid.asBoolean(json)
+    @inline def asBoolean: Option[Boolean] = braid.asBoolean(json)
 
-    /** If this JSON is a number, returns a [[scala.BigDecimal]] representation
-      * of the JSON number.
+    /** If this JSON is a number, returns a
+      * [[com.quincyjo.braid.numbers.JsonNumber]] representation of the JSON
+      * number.
       * @see
       *   [[com.quincyjo.braid.Braid.asNumber]]
       * @return
       *   A number or None if the JSON is not a number.
       */
-    def asNumber: Option[BigDecimal] = braid.asNumber(json)
+    @inline def asNumber: Option[JsonNumber[Json]] = braid.asNumber(json)
 
     /** If this JSON is null, returns a [[scala.Unit]] representation of the
       * JSON null.
@@ -494,7 +500,7 @@ object Braid {
       * @return
       *   A unit or None if the JSON is not null.
       */
-    def asNull: Option[Unit] = braid.asNull(json)
+    @inline def asNull: Option[Unit] = braid.asNull(json)
 
     /** Maps the provided function over the JSON if it is an object or returns
       * it unmodified if it is not.
@@ -505,7 +511,7 @@ object Braid {
       * @return
       *   The transformed JSON object or original JSON if not an object.
       */
-    def mapObject(f: Map[String, Json] => Map[String, Json]): Json =
+    @inline def mapObject(f: Map[String, Json] => Map[String, Json]): Json =
       braid.mapObject(json)(f)
 
     /** Maps the provided function over the JSON if it is an array or returns it
@@ -517,7 +523,7 @@ object Braid {
       * @return
       *   The transformed JSON array or original JSON if not an array.
       */
-    def mapArray(f: Vector[Json] => Vector[Json]): Json =
+    @inline def mapArray(f: Vector[Json] => Vector[Json]): Json =
       braid.mapArray(json)(f)
 
     /** Maps the provided function over the JSON if it is a fromString or
@@ -529,7 +535,7 @@ object Braid {
       * @return
       *   The transformed JSON string or original JSON if not a fromString.
       */
-    def mapString(f: String => String): Json =
+    @inline def mapString(f: String => String): Json =
       braid.mapString(json)(f)
 
     /** Maps the provided function over the JSON if it is a boolean or returns
@@ -541,7 +547,7 @@ object Braid {
       * @return
       *   The transformed JSON boolean or original JSON if not a boolean.
       */
-    def mapBoolean(f: Boolean => Boolean): Json =
+    @inline def mapBoolean(f: Boolean => Boolean): Json =
       braid.mapBoolean(json)(f)
 
     /** Maps the provided function over the JSON if it is a number or returns it
@@ -553,7 +559,9 @@ object Braid {
       * @return
       *   The transformed JSON number or original JSON if not a number.
       */
-    def mapNumber(f: BigDecimal => BigDecimal): Json =
+    @inline def mapNumber[T: JsonNumber.JsonNumberMagnet](
+        f: JsonNumber[Json] => T
+    ): Json =
       braid.mapNumber(json)(f)
 
     /** Returns true if the JSON is an atomic value. IE, a string, number,
@@ -563,7 +571,7 @@ object Braid {
       * @return
       *   True if the JSON is an atomic value, false otherwise.
       */
-    def isAtomic: Boolean = braid.isAtomic(json)
+    @inline def isAtomic: Boolean = braid.isAtomic(json)
 
     /** Returns true if the JSON is an associative, IE, an object or array, and
       * false if it is not.
@@ -572,7 +580,7 @@ object Braid {
       * @return
       *   True if the JSON is an associative, false otherwise.
       */
-    def isAssociative: Boolean = braid.isAssociative(json)
+    @inline def isAssociative: Boolean = braid.isAssociative(json)
 
     /** Folds the JSON with the provided functions into a reduced value.
       * @see
@@ -594,10 +602,10 @@ object Braid {
       * @return
       *   The reduced value.
       */
-    def fold[B](
+    @inline def fold[B](
         ifNull: => B,
         jsonBoolean: Boolean => B,
-        jsonNumber: BigDecimal => B,
+        jsonNumber: JsonNumber[Json] => B,
         jsonString: String => B,
         jsonArray: Vector[Json] => B,
         jsonObject: Map[String, Json] => B
@@ -625,7 +633,7 @@ object Braid {
       * @return
       *   The reduced value.
       */
-    def arrayOrObject[B](
+    @inline def arrayOrObject[B](
         orElse: => B,
         jsonArray: Vector[Json] => B,
         jsonObject: Map[String, Json] => B

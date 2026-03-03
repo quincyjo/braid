@@ -22,10 +22,6 @@ import scala.util.Try
 
 /** Provides Javascript operations for braided JSONs which evaluate according to
   * Javascript rules.
-  * @param braid
-  *   The [[com.quincyjo.braid.Braid]] for {@@codeJson} .
-  * @tparam Json
-  *   The type of {@@codeJson} .
   */
 trait JsonOperations {
 
@@ -42,7 +38,7 @@ trait JsonOperations {
     braid.fold(json)(
       Some(0),
       boolean => Some(if (boolean) 1 else 0),
-      Some(_),
+      _.toBigDecimal,
       string =>
         Option
           .when(string.forall(_.isWhitespace))(BigDecimal(0))
@@ -68,7 +64,7 @@ trait JsonOperations {
     braid.fold(json)(
       "null",
       if (_) "true" else "false",
-      _.toString(),
+      _.asJson.toString(),
       identity,
       _.map(coerceToString(_)(braid)).mkString(","),
       _ => "[object Object]"
@@ -84,7 +80,7 @@ trait JsonOperations {
     braid.fold(json)(
       false,
       identity,
-      _ != 0,
+      _.toDouble != 0,
       _.nonEmpty,
       _ => true,
       _ => true
@@ -133,7 +129,7 @@ trait JsonOperations {
     * @param b
     *   The second JSON.
     * @return
-    *   {@@codea} and {@@codeb} coerced into the same type if able.
+    *   {@@@@codea} and {@@@@codeb} coerced into the same type if able.
     */
   def convertTypes[Json](a: Json, b: Json)(implicit
       braid: Braid[Json]
