@@ -129,7 +129,7 @@ trait JsonOperations {
     * @param b
     *   The second JSON.
     * @return
-    *   {@@@@codea} and {@@@@codeb} coerced into the same type if able.
+    *   The two JSONs coerced into the same type if able.
     */
   def convertTypes[Json](a: Json, b: Json)(implicit
       braid: Braid[Json]
