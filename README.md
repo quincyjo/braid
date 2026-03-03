@@ -90,6 +90,63 @@ def getValues[Json: Braid](json: Json): Iterable[Json] =
     )
 ```
 
+### Numbers
+
+Different JSON libraries store numbers with different internal representations — some distinguish between integers, longs,
+doubles, and arbitrary-precision decimals, while others use a single `BigDecimal` for all numbers. Braid normalises this
+through `JsonNumber[Json]`, a library-independent wrapper with a consistent API for extracting numeric values in common
+Scala types.
+
+`asNumber` returns a `JsonNumber` if the JSON value is a number, `None` otherwise. The `JsonNumber` can then be
+interrogated in the desired type. Conversions that may lose information due to range or fractional values return
+`Option`, while `toDouble` and `toFloat` always succeed, saturating to `±Infinity` for values outside their
+representable range.
+
+This allows the underlying JSON library to maintain its own internal representation of numbers, preserving their support
+for precision or larger numbers, such as `Circe`'s `BiggerDecimal`.
+
+```scala
+scala> val json = Braid[JsValue].fromBigDecimal(BigDecimal("3.99"))
+val json: play.api.libs.json.JsValue = 3.99
+
+scala> val n = Braid[JsValue].asNumber(json).get
+val n: JsonNumber[JsValue] = PlayJsonNumber(3.99)
+
+scala> n.toBigDecimal
+val res0: Option[BigDecimal] = Some(3.99)
+
+scala> n.toLong
+val res1: Option[Long] = None
+
+scala> n.toDouble
+val res2: Double = 3.99
+```
+
+`mapNumber` applies a function over the `JsonNumber` if the JSON is a number and converts the result back to a JSON
+number, leaving the value unchanged if the JSON is not a number. The return type of the function must be one of the
+supported numeric types: `Int`, `Long`, `Float`, `Double`, `BigInt`, `BigDecimal`, `Short`, or `Byte`, and is automatically
+converted back to an appropriate concrete JSON number for the underlying JSON library.
+
+```scala
+scala> val json = Braid[JsValue].fromLong(100L)
+val json: play.api.libs.json.JsValue = 100
+
+scala> Braid[JsValue].mapNumber(json)(_.toLong.getOrElse(0L) * 2)
+val res3: play.api.libs.json.JsValue = 200
+
+scala> Braid[JsValue].mapNumber(Braid[JsValue].fromString("hello"))(_.toLong.getOrElse(0L) * 2)
+val res4: play.api.libs.json.JsValue = "hello"
+```
+
+A instance of `JsonNumber` may be narrowed back to the underlying JSON instance if desired. This provides a normalized
+API for resaturating a JSON when the underlying library has a distinct class definition for describing numbers from the
+JSON AST (eg, Circe and Json4s).
+
+```scala
+scala> Braid[JsValue].fromInt(42).asNumber.get.asJson
+val res7: play.api.libs.json.JsValue = 42
+```
+
 ## Additional Modules
 
 ### Circe Support

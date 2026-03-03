@@ -18,6 +18,7 @@ package com.quincyjo.braid.json4s
 
 import com.quincyjo.braid.Braid
 import org.json4s._
+import com.quincyjo.braid.numbers.JsonNumber
 
 object Json4sBraid extends Braid[JValue] {
 
@@ -84,13 +85,12 @@ object Json4sBraid extends Braid[JValue] {
       case _           => None
     }
 
-  override def asNumber(json: JValue): Option[BigDecimal] =
-    json match {
-      case JDecimal(num)              => Some(num)
-      case JInt(num)                  => Some(BigDecimal(num))
-      case JLong(num)                 => Some(BigDecimal(num))
-      case JDouble(num) if !num.isNaN => Some(BigDecimal(num))
-      case _                          => None
+  override def asNumber(json: JValue): Option[JsonNumber[JValue]] =
+    Option(json).collect {
+      case num: JDecimal                          => Json4sNumber(num)
+      case num: JInt                              => Json4sNumber(num)
+      case num: JLong                             => Json4sNumber(num)
+      case num @ JDouble(double) if !double.isNaN => Json4sNumber(num)
     }
 
   override def asNull(json: JValue): Option[Unit] =
@@ -138,22 +138,18 @@ object Json4sBraid extends Braid[JValue] {
   override def fold[B](json: JValue)(
       ifNull: => B,
       jsonBoolean: Boolean => B,
-      jsonNumber: BigDecimal => B,
+      jsonNumber: JsonNumber[JValue] => B,
       jsonString: String => B,
       jsonArray: Vector[JValue] => B,
       jsonObject: Map[String, JValue] => B
   ): B = json match {
     case JNull | JNothing => ifNull
     case JString(s)       => jsonString(s)
-    case JDouble(num) =>
-      if (num.isNaN) ifNull else jsonNumber(BigDecimal(num))
-    case JDecimal(num) => jsonNumber(num)
-    case JLong(num)    => jsonNumber(BigDecimal(num))
-    case JInt(num)     => jsonNumber(BigDecimal(num))
-    case JBool(value)  => jsonBoolean(value)
-    case JObject(obj)  => jsonObject(obj.toMap)
-    case JArray(arr)   => jsonArray(arr.toVector)
-    case JSet(set)     => jsonArray(set.toVector)
+    case num: JNumber     => jsonNumber(Json4sNumber(num))
+    case JBool(value)     => jsonBoolean(value)
+    case JObject(obj)     => jsonObject(obj.toMap)
+    case JArray(arr)      => jsonArray(arr.toVector)
+    case JSet(set)        => jsonArray(set.toVector)
   }
 
   override def mapObject(json: JValue)(
@@ -172,6 +168,57 @@ object Json4sBraid extends Braid[JValue] {
   override def mapBoolean(json: JValue)(f: Boolean => Boolean): JValue =
     asBoolean(json).map(f).map(fromBoolean).getOrElse(json)
 
-  override def mapNumber(json: JValue)(f: BigDecimal => BigDecimal): JValue =
-    asNumber(json).map(f).map(fromBigDecimal).getOrElse(json)
+  private final case class Json4sNumber(value: JValue & JNumber)
+      extends JsonNumber[JValue] {
+
+    override def asJson: JValue = value
+
+    override def toBigDecimal: Option[BigDecimal] = value match {
+      case JInt(bigInt)      => Some(BigDecimal(bigInt))
+      case JLong(long)       => Some(BigDecimal(long))
+      case JDecimal(decimal) => Some(decimal)
+      case JDouble(double)   => Option.when(double.isFinite)(BigDecimal(double))
+      case _                 => None
+    }
+
+    override def toBigInt: Option[BigInt] = value match {
+      case JInt(bigInt)      => Some(bigInt)
+      case JLong(long)       => Some(BigInt(long))
+      case JDecimal(decimal) => Option.when(decimal.isWhole)(decimal.toBigInt)
+      case JDouble(double) =>
+        Option
+          .when(double.isFinite)(BigDecimal(double))
+          .filter(_.isWhole)
+          .map(_.toBigInt)
+      case _ => None
+    }
+
+    override def toDouble: Double = value match {
+      case JInt(bigInt)      => bigInt.toDouble
+      case JLong(long)       => long.toDouble
+      case JDecimal(decimal) => decimal.toDouble
+      case JDouble(double)   => double
+      case _                 => Double.NaN
+    }
+
+    override def toFloat: Float = value match {
+      case JInt(bigInt)      => bigInt.toFloat
+      case JLong(long)       => long.toFloat
+      case JDecimal(decimal) => decimal.toFloat
+      case JDouble(double)   => double.toFloat
+      case _                 => Float.NaN
+    }
+
+    override def toLong: Option[Long] = value match {
+      case JInt(bigInt)      => Option.when(bigInt.isValidLong)(bigInt.toLong)
+      case JLong(long)       => Some(long)
+      case JDecimal(decimal) => Option.when(decimal.isValidLong)(decimal.toLong)
+      case JDouble(double) =>
+        Option.when {
+          val l = double.toLong
+          l.toDouble == double && l != Long.MaxValue
+        }(double.toLong)
+      case _ => None
+    }
+  }
 }

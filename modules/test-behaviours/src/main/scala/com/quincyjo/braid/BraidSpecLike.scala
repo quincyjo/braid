@@ -20,6 +20,7 @@ import org.scalatest.OptionValues
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
+import com.quincyjo.braid.numbers.JsonNumber
 
 trait BraidSpecLike
     extends AnyFlatSpecLike
@@ -172,15 +173,35 @@ trait BraidSpecLike
       }
     }
 
-    it should "be fromBigDecimal value for JSON numbers" in {
-      val cases = Table(
-        "json" -> "expected",
-        braid.fromInt(42) -> 42,
-        braid.fromInt(0) -> 0
+    it should "be a JsonNumber for JSON numbers" in {
+      val cases = Table[Json, JsonNumber[Json] => Any, Any](
+        ("json", "accessor", "expected"),
+        (braid.fromInt(42), _.toInt, Some(42)),
+        (braid.fromInt(0), _.toInt, Some(0)),
+        (braid.fromInt(-1), _.toInt, Some(-1)),
+        (braid.fromInt(Int.MaxValue), _.toInt, Some(Int.MaxValue)),
+        (braid.fromInt(Int.MinValue), _.toInt, Some(Int.MinValue)),
+        (braid.fromLong(Long.MaxValue), _.toLong, Some(Long.MaxValue)),
+        (braid.fromLong(Long.MinValue), _.toLong, Some(Long.MinValue)),
+        (
+          braid.fromBigInt(BigInt("99999999999999999999")),
+          _.toBigInt,
+          Some(BigInt("99999999999999999999"))
+        ),
+        (
+          braid.fromBigDecimal(BigDecimal("3.14")),
+          _.toBigDecimal,
+          Some(BigDecimal("3.14"))
+        ),
+        (
+          braid.fromBigDecimal(BigDecimal("-0.001")),
+          _.toBigDecimal,
+          Some(BigDecimal("-0.001"))
+        )
       )
 
-      forAll(cases) { (json, expected) =>
-        braid.asNumber(json).value should be(expected)
+      forAll(cases) { (json, accessor, expected) =>
+        accessor(braid.asNumber(json).value) should be(expected)
       }
     }
 
@@ -205,7 +226,7 @@ trait BraidSpecLike
       braid.asNull(braid.Null).value should be(())
     }
 
-    "isObject" should "be None for non-objects" in {
+    "isObject" should "be false for non-objects" in {
       val cases = Table(
         "json",
         braid.arr(),
@@ -222,7 +243,7 @@ trait BraidSpecLike
       }
     }
 
-    it should "return a map of an object's attributes" in {
+    it should "be true for JSON objects" in {
       val cases = Table(
         "json",
         braid.obj(),
@@ -234,7 +255,7 @@ trait BraidSpecLike
       }
     }
 
-    "isArray" should "be None for non-arrays" in {
+    "isArray" should "be false for non-arrays" in {
       val cases = Table(
         "json",
         braid.obj(),
@@ -250,7 +271,7 @@ trait BraidSpecLike
       }
     }
 
-    it should "return the values of an array" in {
+    it should "be true for JSON arrays" in {
       val cases = Table(
         "json",
         braid.arr(),
@@ -263,7 +284,7 @@ trait BraidSpecLike
       }
     }
 
-    "isString" should "be None for non-strings" in {
+    "isString" should "be false for non-strings" in {
       val cases = Table(
         "json",
         braid.fromInt(42),
@@ -280,7 +301,7 @@ trait BraidSpecLike
       }
     }
 
-    it should "be fromString value for JSON strings" in {
+    it should "be true for JSON strings" in {
       val cases = Table(
         "json",
         braid.fromString("foobar"),
@@ -293,7 +314,7 @@ trait BraidSpecLike
       }
     }
 
-    "isBoolean" should "be None for non-booleans" in {
+    "isBoolean" should "be false for non-booleans" in {
       val cases = Table(
         "json",
         braid.fromInt(42),
@@ -310,7 +331,7 @@ trait BraidSpecLike
       }
     }
 
-    it should "be boolean value for JSON booleans" in {
+    it should "be true for JSON booleans" in {
       val cases = Table(
         "json",
         braid.fromBoolean(true),
@@ -322,7 +343,7 @@ trait BraidSpecLike
       }
     }
 
-    "isNumber" should "be None for non-numbers" in {
+    "isNumber" should "be false for non-numbers" in {
       val cases = Table(
         "json",
         braid.fromString("foobar"),
@@ -339,7 +360,7 @@ trait BraidSpecLike
       }
     }
 
-    it should "be fromBigDecimal value for JSON numbers" in {
+    it should "be true for JSON numbers" in {
       val cases = Table(
         "json",
         braid.fromInt(42),
@@ -351,7 +372,7 @@ trait BraidSpecLike
       }
     }
 
-    "isNull" should "be None for non-nulls" in {
+    "isNull" should "be false for non-nulls" in {
       val cases = Table(
         "json",
         braid.fromString("foobar"),
@@ -368,7 +389,7 @@ trait BraidSpecLike
       }
     }
 
-    it should "be Unit for JSON nulls" in {
+    it should "be true for JSON null" in {
       braid.isNull(braid.Null) should be(true)
     }
   }

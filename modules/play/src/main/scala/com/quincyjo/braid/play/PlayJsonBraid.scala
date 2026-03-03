@@ -18,6 +18,7 @@ package com.quincyjo.braid.play
 
 import com.quincyjo.braid.Braid
 import play.api.libs.json._
+import com.quincyjo.braid.numbers.JsonNumber
 
 object PlayJsonBraid extends Braid[JsValue] {
 
@@ -84,9 +85,9 @@ object PlayJsonBraid extends Braid[JsValue] {
       case _                  => None
     }
 
-  override def asNumber(json: JsValue): Option[BigDecimal] =
+  override def asNumber(json: JsValue): Option[JsonNumber[JsValue]] =
     json match {
-      case JsNumber(value) => Some(value)
+      case JsNumber(value) => Some(PlayJsonNumber(value))
       case _               => None
     }
 
@@ -135,14 +136,14 @@ object PlayJsonBraid extends Braid[JsValue] {
   override def fold[B](json: JsValue)(
       ifNull: => B,
       jsonBoolean: Boolean => B,
-      jsonNumber: BigDecimal => B,
+      jsonNumber: JsonNumber[JsValue] => B,
       jsonString: String => B,
       jsonArray: Vector[JsValue] => B,
       jsonObject: Map[String, JsValue] => B
   ): B = json match {
     case JsNull               => ifNull
     case boolean: JsBoolean   => jsonBoolean(boolean.value)
-    case JsNumber(value)      => jsonNumber(value)
+    case JsNumber(value)      => jsonNumber(PlayJsonNumber(value))
     case JsString(value)      => jsonString(value)
     case JsArray(value)       => jsonArray(value.toVector)
     case JsObject(underlying) => jsonObject(underlying.toMap)
@@ -177,9 +178,29 @@ object PlayJsonBraid extends Braid[JsValue] {
       case other            => other
     }
 
-  override def mapNumber(json: JsValue)(f: BigDecimal => BigDecimal): JsValue =
-    json match {
-      case JsNumber(value) => JsNumber(f(value))
-      case other           => other
+  private final case class PlayJsonNumber(value: BigDecimal)
+      extends JsonNumber[JsValue] {
+
+    override def asJson: JsValue = JsNumber(value)
+
+    override def toBigDecimal: Option[BigDecimal] = Some(value)
+
+    override def toBigInt: Option[BigInt] =
+      Option.when(value.isWhole)(value.toBigInt)
+
+    override def toDouble: Double = value.toDouble
+
+    override def toFloat: Float = value.toFloat
+
+    override def toLong: Option[Long] =
+      Option.when(value.isValidLong)(value.toLong)
+
+    override final def equals(that: Any): Boolean = that match {
+      case that: PlayJsonNumber => this.value.equals(that.value)
+      case that: BigDecimal     => this.value.equals(that)
+      case _                    => false
     }
+
+    override final def hashCode: Int = value.hashCode
+  }
 }

@@ -18,8 +18,11 @@ package com.quincyjo.braid.circe
 
 import com.quincyjo.braid.BraidSpecLike
 import io.circe.Json
+import com.quincyjo.braid.JsonNumberSpecLike
 
-class CirceBraidSpec extends BraidSpecLike {
+class CirceBraidSpec extends BraidSpecLike with JsonNumberSpecLike {
 
-  it should behave like braidFor[Json](CirceBraid)
+  "CirceBraid" should behave like braidFor[Json](CirceBraid)
+
+  "CirceJsonNumber" should behave like jsonNumberFor[Json](CirceBraid)
 }

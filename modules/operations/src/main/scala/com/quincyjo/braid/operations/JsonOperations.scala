@@ -38,7 +38,7 @@ trait JsonOperations {
     braid.fold(json)(
       Some(0),
       boolean => Some(if (boolean) 1 else 0),
-      Some(_),
+      _.toBigDecimal,
       string =>
         Option
           .when(string.forall(_.isWhitespace))(BigDecimal(0))
@@ -64,7 +64,7 @@ trait JsonOperations {
     braid.fold(json)(
       "null",
       if (_) "true" else "false",
-      _.toString(),
+      _.asJson.toString(),
       identity,
       _.map(coerceToString(_)(braid)).mkString(","),
       _ => "[object Object]"
@@ -80,7 +80,7 @@ trait JsonOperations {
     braid.fold(json)(
       false,
       identity,
-      _ != 0,
+      _.toDouble != 0,
       _.nonEmpty,
       _ => true,
       _ => true

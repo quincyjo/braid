@@ -17,6 +17,7 @@
 package com.quincyjo.braid.bean
 
 import com.quincyjo.braid.Braid
+import com.quincyjo.braid.numbers.JsonNumber
 
 sealed trait JsonBean
 
@@ -123,6 +124,7 @@ object JsonBean {
       override def apply(t: Boolean): JsonBean = boolean(t)
     }
   }
+
   implicit object JsonBeanBraid extends Braid[JsonBean] {
 
     override def fromString(string: String): JsonBean =
@@ -185,8 +187,8 @@ object JsonBean {
       case _               => None
     }
 
-    override def asNumber(json: JsonBean): Option[BigDecimal] = json match {
-      case JNumber(value) => Some(value)
+    override def asNumber(json: JsonBean): Option[JsonNumber[JsonBean]] = json match {
+      case JNumber(value) => Some(JsonBeanNumber(value))
       case _              => None
     }
 
@@ -253,17 +255,10 @@ object JsonBean {
         .map(value => JBoolean(f(value)))
         .getOrElse(json)
 
-    override def mapNumber(
-        json: JsonBean
-    )(f: BigDecimal => BigDecimal): JsonBean =
-      asNumber(json)
-        .map(value => JNumber(f(value)))
-        .getOrElse(json)
-
     override def fold[B](json: JsonBean)(
         ifNull: => B,
         jsonBoolean: Boolean => B,
-        jsonNumber: BigDecimal => B,
+        jsonNumber: JsonNumber[JsonBean] => B,
         jsonString: String => B,
         jsonArray: Vector[JsonBean] => B,
         jsonObject: Map[String, JsonBean] => B
@@ -272,9 +267,31 @@ object JsonBean {
         case JObject(underlying) => jsonObject(underlying)
         case JArray(values)      => jsonArray(values)
         case JBoolean(value)     => jsonBoolean(value)
-        case JNumber(value)      => jsonNumber(value)
+        case JNumber(value)      => jsonNumber(JsonBeanNumber(value))
         case JString(value)      => jsonString(value)
         case JNull               => ifNull
       }
+  }
+
+  final case class JsonBeanNumber(value: BigDecimal) extends JsonNumber[JsonBean] {
+    override def asJson: JsonBean = JNumber(value)
+
+    override def toBigDecimal: Option[BigDecimal] = Some(value)
+
+    override def toBigInt: Option[BigInt] =
+      Option.when(value.isWhole)(value.toBigInt)
+
+    override def toDouble: Double = value.toDouble
+
+    override def toFloat: Float = value.toFloat
+
+    override def toLong: Option[Long] = Option.when(value.isValidLong)(value.toLong)
+
+    override final def equals(that: Any): Boolean = that match {
+      case that: JsonBeanNumber => this.value.equals(that.value)
+      case _                    => false
+    }
+
+    override final def hashCode: Int = value.hashCode
   }
 }

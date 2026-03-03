@@ -18,8 +18,11 @@ package com.quincyjo.braid.json4s
 
 import com.quincyjo.braid.BraidSpecLike
 import org.json4s.JValue
+import com.quincyjo.braid.JsonNumberSpecLike
 
-class Json4sBraidSpec extends BraidSpecLike {
+class Json4sBraidSpec extends BraidSpecLike with JsonNumberSpecLike {
 
-  it should behave like braidFor[JValue](Json4sBraid)
+  "Json4sBraid" should behave like braidFor[JValue](Json4sBraid)
+
+  "Json4sJsonNumber" should behave like jsonNumberFor[JValue](Json4sBraid)
 }

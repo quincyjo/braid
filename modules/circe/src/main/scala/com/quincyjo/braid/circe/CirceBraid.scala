@@ -17,7 +17,8 @@
 package com.quincyjo.braid.circe
 
 import com.quincyjo.braid.Braid
-import io.circe.{Json, JsonNumber, JsonObject}
+import io.circe.{Json, JsonObject, JsonNumber as CirceNumber}
+import com.quincyjo.braid.numbers.JsonNumber
 
 object CirceBraid extends Braid[Json] {
 
@@ -72,8 +73,8 @@ object CirceBraid extends Braid[Json] {
   override def asBoolean(json: Json): Option[Boolean] =
     json.asBoolean
 
-  override def asNumber(json: Json): Option[BigDecimal] =
-    json.asNumber.flatMap(_.toBigDecimal)
+  override def asNumber(json: Json): Option[JsonNumber[Json]] =
+    json.asNumber.map(CirceJsonNumber.apply)
 
   override def asNull(json: Json): Option[Unit] =
     json.asNull
@@ -99,7 +100,7 @@ object CirceBraid extends Braid[Json] {
   override def fold[B](json: Json)(
       ifNull: => B,
       jsonBoolean: Boolean => B,
-      jsonNumber: BigDecimal => B,
+      jsonNumber: JsonNumber[Json] => B,
       jsonString: String => B,
       jsonArray: Vector[Json] => B,
       jsonObject: Map[String, Json] => B
@@ -107,7 +108,7 @@ object CirceBraid extends Braid[Json] {
     json.fold(
       ifNull,
       jsonBoolean,
-      _.toBigDecimal.fold(ifNull)(jsonNumber),
+      number => jsonNumber(CirceJsonNumber(number)),
       jsonString,
       jsonArray,
       obj => jsonObject(obj.toMap)
@@ -127,8 +128,26 @@ object CirceBraid extends Braid[Json] {
   override def mapBoolean(json: Json)(f: Boolean => Boolean): Json =
     json.mapBoolean(f)
 
-  override def mapNumber(json: Json)(f: BigDecimal => BigDecimal): Json =
-    json.mapNumber(number =>
-      JsonNumber.fromDecimalStringUnsafe(f(number.toBigDecimal.get).toString)
-    )
+  private final case class CirceJsonNumber(value: CirceNumber)
+      extends JsonNumber[Json] {
+
+    override def asJson: Json = Json.fromJsonNumber(value)
+
+    override def toBigDecimal: Option[BigDecimal] = value.toBigDecimal
+
+    override def toBigInt: Option[BigInt] = value.toBigInt
+
+    override def toDouble: Double = value.toDouble
+
+    override def toFloat: Float = value.toFloat
+
+    override def toLong: Option[Long] = value.toLong
+
+    override final def equals(that: Any): Boolean = that match {
+      case that: CirceJsonNumber => this.value.equals(that.value)
+      case _                     => false
+    }
+
+    override final def hashCode: Int = value.hashCode
+  }
 }
